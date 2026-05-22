@@ -1,0 +1,441 @@
+🔎 WHAT YOU ACTUALLY DID (STEP-BY-STEP PROCESS)
+
+This is very important for interviews.
+
+🔹 Phase 1 – Infrastructure Setup
+
+Launched AWS EC2 instance (Amazon Linux / Linux amd64)
+
+Installed Java
+
+Installed Jenkins
+
+Opened port 8080 in Security Group
+
+Verified Jenkins service
+
+sudo systemctl status jenkins
+
+🔹 Phase 2 – Jenkins Configuration
+
+Configured number of executors
+
+Observed:
+
+Still waiting to schedule task
+Waiting for next available executor
+
+
+👉 Learned executor starvation concept
+
+🔹 Phase 3 – Debugging Issues You Faced
+🚨 Issue 1: Build Slow / Not Starting
+
+Reason: No executor available
+Fix: Checked node status → Brought node online
+
+🚨 Issue 2: Built-in node going offline
+
+Root Cause:
+Low disk space + low temp space
+
+You saw:
+
+Free Temp Space: 475.98 MiB
+Disk space below threshold 1.00 GiB
+
+
+👉 Jenkins by default requires 1GB minimum temp space.
+
+🚨 Issue 3: /tmp almost full
+df -h
+
+
+Only 480MB partition → Jenkins paused.
+
+Fix:
+
+Cleaned /tmp
+
+Increased disk size
+
+Restarted Jenkins
+
+🚨 Issue 4: Memory Pressure
+free -h
+
+
+You had:
+
+961MB RAM
+
+Only 66MB free
+
+That caused:
+
+Slowness
+
+Node offline
+
+Fix:
+
+Restart Jenkins
+
+Consider upgrading EC2 instance
+
+🔹 Phase 4 – Pipeline Creation
+
+You created:
+
+pipeline {
+    agent any
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Checking out source code...'
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'chmod +x legacy_app.sh'
+                sh './legacy_app.sh'
+            }
+        }
+        stage('Test') {
+            steps {
+                echo 'Tests completed.'
+            }
+        }
+    }
+}
+
+
+You understood:
+
+agent any
+
+stages
+
+sh execution
+
+declarative pipeline syntax
+
+🎯 INTERVIEW QUESTIONS & ANSWERS
+🔹 Q1: What was the biggest challenge in your DevOps project?
+
+Answer:
+The biggest challenge was Jenkins build scheduling delays due to executor starvation and node going offline caused by low disk and temp space. I analyzed system metrics using df -h and free -h and resolved it by cleaning disk and restarting services.
+
+🔹 Q2: Why was Jenkins build stuck at "Waiting for next available executor"?
+
+Answer:
+Because the built-in node was either offline or all executors were occupied. Jenkins requires a free executor to schedule builds.
+
+🔹 Q3: Why did Jenkins go into paused/shutdown mode?
+
+Answer:
+Jenkins detected disk space below its configured threshold (1GB), so it paused builds to protect system integrity.
+
+🔹 Q4: How do you troubleshoot a slow Jenkins build?
+
+Answer:
+
+Check executor availability
+
+Check node status
+
+Verify disk space (df -h)
+
+Check memory usage (free -h)
+
+Check temp directory usage
+
+Restart Jenkins if required
+
+🔹 Q5: What is an executor in Jenkins?
+
+Answer:
+An executor is a worker thread on a Jenkins node that runs builds. Each executor can run one job at a time.
+
+🔹 Q6: Why is /tmp important in Jenkins?
+
+Answer:
+Jenkins uses /tmp for temporary workspace and build files. If temp space is below threshold, builds pause.
+
+🔹 Q7: Difference between agent any and specific agent?
+
+Answer:
+
+agent any → runs on any available node
+
+
+agent { label 'linux' } → runs on a specific labeled node
+
+
+Project 1 – Jenkins on AWS (Mock Interview with Answers)
+1️⃣ Explain your Jenkins CI/CD architecture on AWS.
+
+Answer:
+
+I designed a CI pipeline on AWS where:
+
+Code was hosted in GitHub
+
+Jenkins was installed on an EC2 instance (Amazon Linux)
+
+Port 8080 was opened in Security Group
+
+Jenkins pulled the repository
+
+A Declarative Pipeline executed shell-based build scripts
+
+The flow was:
+
+Developer → GitHub → Jenkins (EC2) → Build → Logs
+
+During implementation, I handled executor issues, disk space constraints, and memory pressure, which gave me strong troubleshooting exposure.
+
+2️⃣ How did you configure Jenkins on EC2?
+
+Answer:
+
+Steps I followed:
+
+Launched EC2 (Linux amd64)
+
+Installed Java (required for Jenkins)
+
+Installed Jenkins via package manager
+
+Started Jenkins using:
+
+sudo systemctl start jenkins
+
+
+Opened port 8080 in Security Group
+
+Accessed Jenkins via Public IP
+
+Configured executors and pipeline job
+
+I also verified service status using:
+
+sudo systemctl status jenkins
+
+3️⃣ What is an executor in Jenkins?
+
+Answer:
+
+An executor is a worker thread on a Jenkins node that runs builds.
+
+1 executor = 1 build at a time
+
+If no executor is free → Build waits
+
+In my project, builds were stuck at:
+
+“Waiting for next available executor”
+
+Because executors were busy or node was offline.
+
+4️⃣ Why was your build stuck at “Waiting for next available executor”?
+
+Answer:
+
+Because:
+
+Built-in node was offline
+
+Or all executors were occupied
+
+Or Jenkins paused due to disk threshold
+
+I diagnosed it by checking:
+
+Node status
+
+Number of executors
+
+Disk space (df -h)
+
+Memory (free -h)
+
+5️⃣ Why did Jenkins go into paused mode?
+
+Answer:
+
+Jenkins detected that /tmp space was below its safety threshold (1GB).
+
+I saw:
+
+Free Temp Space: ~475MB
+
+Threshold required: 1GB
+
+Jenkins automatically paused builds to protect system integrity.
+
+This taught me Jenkins resource protection mechanisms.
+
+6️⃣ How did you troubleshoot slow builds?
+
+Answer:
+
+I followed a systematic approach:
+
+Checked executor availability
+
+Verified node online status
+
+Checked disk space (df -h)
+
+Checked memory (free -h)
+
+Cleaned /tmp
+
+Restarted Jenkins
+
+This structured debugging approach reduced build failures.
+
+7️⃣ What Linux commands did you use for troubleshooting?
+
+Answer:
+
+df -h → Disk usage
+
+free -h → Memory usage
+
+top → Process monitoring
+
+systemctl status jenkins → Service status
+
+This strengthened my Linux debugging skills in cloud environments.
+
+8️⃣ What is Declarative Pipeline?
+
+Answer:
+
+Declarative Pipeline is a structured Jenkins pipeline syntax that uses:
+
+pipeline
+
+agent
+
+stages
+
+steps
+
+Example from my project:
+
+pipeline {
+  agent any
+  stages {
+    stage('Build') {
+      steps {
+        sh './legacy_app.sh'
+      }
+    }
+  }
+}
+
+
+It improves readability and maintainability.
+
+9️⃣ What is the difference between CI and CD?
+
+Answer:
+
+CI (Continuous Integration) → Automatically build & test code on commit
+
+CD (Continuous Delivery/Deployment) → Automatically deploy to environments
+
+My project focused on CI pipeline implementation.
+
+🔟 What caused the Git error “couldn’t find remote ref master”?
+
+Answer:
+
+The repository branch was main, but Jenkins was trying to fetch master.
+
+Fix:
+
+Updated branch name in Jenkins to main
+
+This taught me branch management awareness.
+
+11️⃣ What happens if /tmp is full?
+
+Answer:
+
+Jenkins cannot create temp workspace
+
+Builds fail or pause
+
+Node may go offline
+
+This happened in my EC2 because /tmp had only 480MB.
+
+12️⃣ How would you improve this setup for production?
+
+Answer:
+
+For production, I would:
+
+Increase EC2 instance size
+
+Move Jenkins home to larger EBS volume
+
+Enable CloudWatch monitoring
+
+Configure backup for Jenkins home
+
+Use Jenkins agents instead of single node
+
+Secure Jenkins with HTTPS
+
+13️⃣ How would you scale Jenkins?
+
+Answer:
+
+Two ways:
+
+Increase executors (Vertical scaling)
+
+Add Jenkins agents (Horizontal scaling)
+
+In enterprise setups, I would integrate Jenkins agents dynamically using cloud auto-scaling.
+
+14️⃣ What security best practices would you implement?
+
+Answer:
+
+Disable anonymous access
+
+Use role-based access control
+
+Store Git credentials securely
+
+Use IAM roles instead of access keys
+
+Enable HTTPS
+
+Restrict Security Group access
+
+15️⃣ Biggest learning from this project?
+
+Answer:
+
+Real-world DevOps is 70% troubleshooting.
+
+I learned:
+
+Resource bottleneck diagnosis
+
+Executor management
+
+Disk & memory threshold behavior
+
+Branch mismatch debugging
+
+Structured incident analysis
+
+This experience strengthened my confidence in handling production-like CI issues.
