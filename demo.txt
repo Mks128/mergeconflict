@@ -1,2 +1,6 @@
 This is a sample file
+
 Adding changes from sprint
+=======
+Adding chnages from master
+
